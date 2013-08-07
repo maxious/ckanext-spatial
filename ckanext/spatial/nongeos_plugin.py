@@ -113,3 +113,40 @@ class GeoJSONPreview(p.SingletonPlugin):
         return {
                 'get_common_map_config_geojson' : spatial_helpers.get_common_map_config,
                 }
+class KMLPreview(p.SingletonPlugin):
+    p.implements(p.IConfigurer, inherit=True)
+    p.implements(p.IResourcePreview, inherit=True)
+
+    KML = ['kml']
+
+    def update_config(self, config):
+        ''' Set up the resource library, public directory and
+        template directory for the preview
+        '''
+
+        p.toolkit.add_public_directory(config, 'public')
+        p.toolkit.add_template_directory(config, 'templates')
+        p.toolkit.add_resource('public', 'ckanext-spatial')
+
+        self.proxy_enabled = config.get(
+            'ckan.resource_proxy_enabled', False)
+
+    def can_preview(self, data_dict):
+        format_lower = data_dict['resource']['format'].lower()
+
+        check = format_lower in self.KML
+        if not self.proxy_enabled and check:
+            check = data_dict['resource']['on_same_domain']
+
+        return check
+
+    def setup_template_variables(self, context, data_dict):
+        import ckanext.resourceproxy.plugin as proxy
+        if (self.proxy_enabled
+                and not data_dict['resource']['on_same_domain']):
+            p.toolkit.c.resource['original_url'] = p.toolkit.c.resource['url']
+            p.toolkit.c.resource['url'] = proxy.get_proxified_resource_url(
+                data_dict)
+
+    def preview_template(self, context, data_dict):
+        return 'dataviewer/kml.html'
