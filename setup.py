@@ -39,6 +39,7 @@ setup(
     csw_harvester=ckanext.spatial.harvesters:CSWHarvester
     waf_harvester=ckanext.spatial.harvesters:WAFHarvester
     doc_harvester=ckanext.spatial.harvesters:DocHarvester
+    wmswfs_harvester=ckanext.spatial.harvesters:WMSWFSHarvester
 
     # Legacy harvesters
     gemini_csw_harvester=ckanext.spatial.harvesters.gemini:GeminiCswHarvester
