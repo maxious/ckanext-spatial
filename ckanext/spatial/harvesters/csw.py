@@ -79,9 +79,7 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
         query = model.Session.execute(
             '''select harvest_object.guid, package.id from package
                inner join harvest_object on package.id = harvest_object.package_id
-               where harvest_object.harvest_source_id = '{source_id}'
-               order by harvest_object.current desc, package.state asc, harvest_object.gathered desc;'''.format(
-                source_id=harvest_job.source.id))
+               order by harvest_object.current desc, package.state asc, harvest_object.gathered desc;''')
         guid_to_package_id = {}
 
         for guid, package_id in query:
@@ -135,7 +133,7 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
                                 package_id=guid_to_package_id[guid],
                                 extras=[HOExtra(key='status', value='delete')])
             model.Session.query(HarvestObject). \
-                filter_by(guid=guid). \
+                filter_by(guid=guid, harvest_source_id=harvest_job.source.id). \
                 update({'current': False}, False)
             obj.save()
             ids.append(obj.id)
