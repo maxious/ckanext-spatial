@@ -77,15 +77,19 @@ def guess_resource_format(url, use_mimetypes=True):
 
     resource_types = {
         # OGC
-        'wms': ('service=wms', 'geoserver/wms', 'mapserver/wmsserver', 'com.esri.wms.Esrimap', 'service/wms'),
-        'wfs': ('service=wfs', 'geoserver/wfs', 'mapserver/wfsserver', 'com.esri.wfs.Esrimap'),
+        'wms': ('service=wms', 'geoserver/wms', 'mapserver/wmsserver', 'com.esri.wms.Esrimap', 'service/wms', 'WMS applications'),
+        'wfs': ('service=wfs', 'geoserver/wfs', 'mapserver/wfsserver', 'com.esri.wfs.Esrimap', 'WFS operations'),
         'wcs': ('service=wcs', 'geoserver/wcs', 'imageserver/wcsserver', 'mapserver/wcsserver'),
         'sos': ('service=sos',),
         'csw': ('service=csw',),
         # ESRI
-        'kml': ('mapserver/generatekml',),
+        'kml': ('mapserver/generatekml', 'kml ', '(kml)'),
         'arcims': ('com.esri.esrimap.esrimap',),
         'arcgis_rest': ('arcgis/rest/services',),
+        'shp': ('(shp)', 'shapefile', 'SDE Feature Class', 'ArcView Shapefile'),
+        'xls': ('xcel ',),
+        'gdb': ('File Geodatabase',),
+        'arcgrid': ('(ArcGIS-grid)', '(ESRI ascii)', 'ArcInfo ascii', 'arcgis grid')
     }
 
     for resource_type, parts in resource_types.iteritems():
@@ -93,12 +97,12 @@ def guess_resource_format(url, use_mimetypes=True):
             return resource_type
 
     file_types = {
-        'kml' : ('kml',),
+        'kml': ('kml',),
         'kmz': ('kmz',),
         'gml': ('gml',),
         'csv': ('csv',),
         'xls': ('xls', 'xlsx'),
-
+        'html': ('xhtml',),
     }
 
     for file_type, extensions in file_types.iteritems():
@@ -127,7 +131,7 @@ class SpatialHarvester(HarvesterBase):
     ''')
 
     target_formats = list(set(map(lambda x: x.upper(), p.toolkit.aslist(config.get('ckanext.spatial.harvest.csw_harvested_formats',
-                                                                                   'csv xls wms wfs wcs sos csw arcims arcgis_rest shp arcgrid kml zip')))))
+                                                                                   'csv xls wms wfs wcs sos csw arcims arcgis_rest shp arcgrid kml zip html')))))
 
     licenses = model.Package.get_license_register().values()
 
@@ -197,10 +201,11 @@ class SpatialHarvester(HarvesterBase):
                                       'Australian Bureau of Meteorology': 'bureauofmeteorology',
                                       'Bureau of Meteorology': 'bureauofmeteorology',
                                       'Australian Electoral Commission (AEC)': 'australianelectoralcommission',
-                                      'Australian Government Department of Sustainability, Environment, Water, Population and Communities': 'departmentofenvironment',
-                                      'Australian Government Department of the Environment': 'departmentofenvironment',
-                                      'Australian Governement Department of the Environment and Water Resources': 'departmentofenvironment',
-                                      'Department of the Environment': 'departmentofenvironment',
+                                      'Australian Government Department of the Environment and Energy': 'doee',
+                                      'Australian Government Department of Sustainability, Environment, Water, Population and Communities': 'doee',
+                                      'Australian Government Department of the Environment': 'doee',
+                                      'Australian Governement Department of the Environment and Water Resources': 'doee',
+                                      'Department of the Environment': 'doee',
                                       'Antarctic CRC - The University of Tasmania': 'commonwealthscientificandindustrialresearchorganisation',
                                       'Australian Institute of Marine Science (AIMS)': 'Australian Institute of Marine Science',
                                       'AU/AADC > Australian Antarctic Data Centre, Australia': 'australianantarcticdivision',
@@ -418,7 +423,8 @@ class SpatialHarvester(HarvesterBase):
         commons = iso_values.get('creative-commons', '')
 
         for l in self.licenses:
-            if any([any([len(extras[y]) and x in ''.join(extras[y]) for y in ['use_constraints', 'access_constraints']]) or (commons and x in commons[0]) for x in [l.title, l.url or l.title]]):
+            if any([any([len(extras[y]) and x in ''.join(extras[y]) for y in ['use_constraints', 'access_constraints']])
+                    or (commons and x in commons[0]) for x in [l.title, l.url or l.title]]):
                 extras['licence'] = l.id
                 package_dict['license_id'] = l.id
                 extras['licence_url'] = l.url
@@ -593,6 +599,19 @@ class SpatialHarvester(HarvesterBase):
 
         if iso_values['source'] and 'ga.gov.au' in iso_values['source']:
             package_dict['notes'] = package_dict['notes'] + "\n\nYou can also purchase hard copies of Geoscience Australia data and other products at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
+
+        if 'environment.gov.au' in harvest_object.source.url:
+            package_dict['notes'] += '\n'.join(iso_values['limitations-on-public-access'])
+            package_dict[
+                'source'] = 'https://www.environment.gov.au/fed/catalog/search/resource/details.page?uuid=%s' % harvest_object.guid
+            package_dict['resources'].append(
+                {
+                    'url': 'https://www.environment.gov.au/fed/catalog/search/resource/details.page?uuid=%s' % harvest_object.guid,
+                    'name': package_dict['title'],
+                    'description': ', '.join([x['name'] for x in iso_values.get('data-format', [])]),
+                    'format': 'html',
+                    'last_modified': iso_values.get('date-updated', '')
+                })
 
         # AGLS mapping
         if iso_values['source']:
@@ -786,7 +805,7 @@ class SpatialHarvester(HarvesterBase):
             return False
 
         def test_res(res):
-            if 'format' in res and res.get('format', None) is not None:
+            if res and 'format' in res and res.get('format', None) is not None:
                 p_format = res['format'].split('/')[-1].upper()
                 if any([t_format in p_format for t_format in self.target_formats]):
                     return res['format'].split('/')[-1]
