@@ -3,7 +3,7 @@ import re
 import mimetypes
 from logging import getLogger
 
-from pylons import config
+from ckan.common import config
 
 import shapely
 
