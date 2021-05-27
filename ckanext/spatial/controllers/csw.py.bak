@@ -1,5 +1,5 @@
-try: from io import StringIO
-except ImportError: from io import StringIO
+try: from cStringIO import StringIO
+except ImportError: from StringIO import StringIO
 import traceback
 from datetime import datetime
 
@@ -53,7 +53,7 @@ class CatalogueServiceWebController(BaseController):
         self.rlog.info("request environ\n%s", request.environ)
         self.rlog.info("request headers\n%s", request.headers)
         ops = self._operations()
-        req = dict(list(request.GET.items()))
+        req = dict(request.GET.items())
         
         ## special cases
 	if "REQUEST" in req: req["request"] = req["REQUEST"]
@@ -79,14 +79,14 @@ class CatalogueServiceWebController(BaseController):
             req["startPosition"] = int(startPosition)
         except:
             err = self._exception(exceptionCode="InvalidParameterValue", locator="startPosition",
-                                  text=str(startPosition))
+                                  text=unicode(startPosition))
             return self._render_xml(err)
         maxRecords = req.get("maxRecords", 10)
         try:
             req["maxRecords"] = int(maxRecords)
         except:
             err = self._exception(exceptionCode="InvalidParameterValue", locator="maxRecords",
-                                  text=str(maxRecords))
+                                  text=unicode(maxRecords))
             return self._render_xml(err)
         req["id"] = [req["id"]] if "id" in req else []
         return ops[req["request"]](req)
@@ -98,7 +98,7 @@ class CatalogueServiceWebController(BaseController):
         ops = self._operations()
         try:
             req = etree.parse(StringIO(request.body))
-            self.rlog.info("request body\n%s", etree.tostring(req, pretty_print=True))
+            self.rlog.info(u"request body\n%s", etree.tostring(req, pretty_print=True))
         except:
             self.rlog.info("request body\n%s", request.body)
             self.rlog.error("exception parsing body\n%s", traceback.format_exc())
@@ -212,16 +212,16 @@ class CatalogueServiceWebController(BaseController):
         caps = etree.Element(ntag("csw:Capabilities"), nsmap=namespaces)
         srvid = etree.SubElement(caps, ntag("ows:ServiceIdentification"))
         title = etree.SubElement(srvid, ntag("ows:Title"))
-        title.text = str(config["cswservice.title"])
+        title.text = unicode(config["cswservice.title"])
         abstract = etree.SubElement(srvid, ntag("ows:Abstract"))
-        abstract.text = str(config["cswservice.abstract"])
+        abstract.text = unicode(config["cswservice.abstract"])
         keywords = etree.SubElement(srvid, ntag("ows:Keywords"))
         for word in [w.strip() for w in config["cswservice.keywords"].split(",")]:
             if word == "": continue
             kw = etree.SubElement(keywords, ntag("ows:Keyword"))
-            kw.text = str(word)
+            kw.text = unicode(word)
         kwtype = etree.SubElement(keywords, ntag("ows:Type"))
-        kwtype.text = str(config["cswservice.keyword_type"])
+        kwtype.text = unicode(config["cswservice.keyword_type"])
         srvtype = etree.SubElement(srvid, ntag("ows:ServiceType"))
         srvtype.text = "CSW"
         srvver = etree.SubElement(srvid, ntag("ows:ServiceTypeVersion"))
@@ -230,7 +230,7 @@ class CatalogueServiceWebController(BaseController):
 
         provider = etree.SubElement(caps, ntag("ows:ServiceProvider"))
         provname = etree.SubElement(provider, ntag("ows:ProviderName"))
-        provname.text = str(config["cswservice.provider_name"])
+        provname.text = unicode(config["cswservice.provider_name"])
         attrs = {
             ntag("xlink:href"): site
             }
@@ -238,34 +238,34 @@ class CatalogueServiceWebController(BaseController):
 
         contact = etree.SubElement(provider, ntag("ows:ServiceContact"))
         name = etree.SubElement(contact, ntag("ows:IndividualName"))
-        name.text = str(config["cswservice.contact_name"])
+        name.text = unicode(config["cswservice.contact_name"])
         pos = etree.SubElement(contact, ntag("ows:PositionName"))
-        pos.text = str(config["cswservice.contact_position"])
+        pos.text = unicode(config["cswservice.contact_position"])
         cinfo = etree.SubElement(contact, ntag("ows:ContactInfo"))
         phone = etree.SubElement(cinfo, ntag("ows:Phone"))
         voice = etree.SubElement(phone, ntag("ows:Voice"))
-        voice.text = str(config["cswservice.contact_voice"])
+        voice.text = unicode(config["cswservice.contact_voice"])
         fax = etree.SubElement(phone, ntag("ows:Fax"))
-        fax.text = str(config["cswservice.contact_fax"])
+        fax.text = unicode(config["cswservice.contact_fax"])
         addr = etree.SubElement(cinfo, ntag("ows:Address"))
         dpoint = etree.SubElement(addr, ntag("ows:DeliveryPoint"))
-        dpoint.text= str(config["cswservice.contact_address"])
+        dpoint.text= unicode(config["cswservice.contact_address"])
         city = etree.SubElement(addr, ntag("ows:City"))
-        city.text = str(config["cswservice.contact_city"])
+        city.text = unicode(config["cswservice.contact_city"])
         region = etree.SubElement(addr, ntag("ows:AdministrativeArea"))
-        region.text = str(config["cswservice.contact_region"])
+        region.text = unicode(config["cswservice.contact_region"])
         pcode = etree.SubElement(addr, ntag("ows:PostalCode"))
-        pcode.text = str(config["cswservice.contact_pcode"])
+        pcode.text = unicode(config["cswservice.contact_pcode"])
         country = etree.SubElement(addr, ntag("ows:Country"))
-        country.text = str(config["cswservice.contact_country"])
+        country.text = unicode(config["cswservice.contact_country"])
         email = etree.SubElement(addr, ntag("ows:ElectronicMailAddress"))
-        email.text = str(config["cswservice.contact_email"])
+        email.text = unicode(config["cswservice.contact_email"])
         hours = etree.SubElement(cinfo, ntag("ows:HoursOfService"))
-        hours.text = str(config["cswservice.contact_hours"])
+        hours.text = unicode(config["cswservice.contact_hours"])
         instructions = etree.SubElement(cinfo, ntag("ows:ContactInstructions"))
-        instructions.text = str(config["cswservice.contact_instructions"])
+        instructions.text = unicode(config["cswservice.contact_instructions"])
         role = etree.SubElement(contact, ntag("ows:Role"))
-        role.text = str(config["cswservice.contact_role"])
+        role.text = unicode(config["cswservice.contact_role"])
 
         opmeta = etree.SubElement(caps, ntag("ows:OperationsMetadata"))
 
@@ -365,7 +365,7 @@ class CatalogueServiceWebController(BaseController):
                 .join(Package) \
                 .join(HarvestSource) \
                 .filter(HarvestObject.current==True) \
-                .filter(Package.state=='active') \
+                .filter(Package.state==u'active') \
                 .filter(or_(HarvestSource.type=='gemini-single', \
                         HarvestSource.type=='gemini-waf', \
                         HarvestSource.type=='csw'))
@@ -390,7 +390,7 @@ class CatalogueServiceWebController(BaseController):
         else:
             attrs["numberOfRecordsReturned"] = 0
 
-        attrs = dict((k, str(v)) for k,v in list(attrs.items()))
+        attrs = dict((k, unicode(v)) for k,v in attrs.items())
         results = etree.SubElement(resp, ntag("csw:SearchResults"), **attrs)
 
         if req["resultType"] == "results":
@@ -399,7 +399,7 @@ class CatalogueServiceWebController(BaseController):
                         .join(Package) \
                         .filter(HarvestObject.guid==guid) \
                         .filter(HarvestObject.current==True) \
-                        .filter(Package.state=='active') \
+                        .filter(Package.state==u'active') \
                         .first()
                 try:
 
@@ -423,7 +423,7 @@ class CatalogueServiceWebController(BaseController):
                     .filter(HarvestSource.active==True) \
                     .filter(HarvestObject.guid==ident) \
                     .filter(HarvestObject.package!=None) \
-                    .filter(Package.state=='active') \
+                    .filter(Package.state==u'active') \
                     .order_by(HarvestObject.gathered.desc()) \
                     .limit(1).first()
 

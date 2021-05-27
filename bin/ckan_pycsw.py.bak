@@ -75,7 +75,7 @@ def load(pycsw_config, ckan_url):
         response = requests.get(url)
         listing = response.json()
         if not isinstance(listing, dict):
-            raise RuntimeError('Wrong API response: %s' % listing)
+            raise RuntimeError, 'Wrong API response: %s' % listing
         results = listing.get('results')
         if not results:
             break
@@ -90,7 +90,7 @@ def load(pycsw_config, ckan_url):
         log.debug('Gathered %s' % start)
 
     log.info('Gather finished ({0} datasets): {1}'.format(
-        len(list(gathered_records.keys())),
+        len(gathered_records.keys()),
         str(datetime.datetime.now())))
 
     existing_records = {}
@@ -115,7 +115,7 @@ def load(pycsw_config, ckan_url):
             ckan_id=ckan_id).delete()
             log.info('Deleted %s' % ckan_id)
             repo.session.commit()
-        except Exception as err:
+        except Exception, err:
             repo.session.rollback()
             raise
 
@@ -128,7 +128,7 @@ def load(pycsw_config, ckan_url):
         try:
             repo.insert(record, 'local', util.get_today_and_now())
             log.info('Inserted %s' % ckan_id)
-        except Exception as err:
+        except Exception, err:
             log.error('ERROR: not inserted %s Error:%s' % (ckan_id, err))
 
     for ckan_id in changed:
@@ -138,16 +138,16 @@ def load(pycsw_config, ckan_url):
             continue
         update_dict = dict([(getattr(repo.dataset, key),
         getattr(record, key)) \
-        for key in list(record.__dict__.keys()) if key != '_sa_instance_state'])
+        for key in record.__dict__.keys() if key != '_sa_instance_state'])
         try:
             repo.session.begin()
             repo.session.query(repo.dataset).filter_by(
             ckan_id=ckan_id).update(update_dict)
             repo.session.commit()
             log.info('Changed %s' % ckan_id)
-        except Exception as err:
+        except Exception, err:
             repo.session.rollback()
-            raise RuntimeError('ERROR: %s' % str(err))
+            raise RuntimeError, 'ERROR: %s' % str(err)
 
 
 def clear(pycsw_config):
@@ -174,13 +174,13 @@ def get_record(context, repo, ckan_url, ckan_id, ckan_info):
 
     try:
         xml = etree.parse(io.BytesIO(response.content))
-    except Exception as err:
+    except Exception, err:
         log.error('Could not pass xml doc from %s, Error: %s' % (ckan_id, err))
         return
 
     try:
         record = metadata.parse_record(context, xml, repo)[0]
-    except Exception as err:
+    except Exception, err:
         log.error('Could not extract metadata from %s, Error: %s' % (ckan_id, err))
         return
 
@@ -233,7 +233,7 @@ def _load_config(file_path):
 
 import os
 import argparse
-from configparser import SafeConfigParser
+from ConfigParser import SafeConfigParser
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -270,5 +270,5 @@ if __name__ == '__main__':
     elif arg.command == 'clear':
         clear(pycsw_config)
     else:
-        print('Unknown command {0}'.format(arg.command))
+        print 'Unknown command {0}'.format(arg.command)
         sys.exit(1)

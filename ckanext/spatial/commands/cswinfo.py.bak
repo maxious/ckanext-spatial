@@ -37,13 +37,13 @@ def cswinfo():
     args = parser.parse_args()
     service = args.service()
     value = service(args)
-    if isinstance(value, str):
-        print(value)
+    if isinstance(value, basestring):
+        print value
     elif isinstance(value, types.GeneratorType):
         count = 0
         for val in value:
-            print(val)
+            print val
             count += 1
-        print('%i results' % count)
+        print '%i results' % count
     elif value is not None:
         pprint(value)

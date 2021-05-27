@@ -1,4 +1,4 @@
-import urllib.request, urllib.error, urllib.parse
+import urllib2
 
 from pylons.i18n import _
 
@@ -29,11 +29,11 @@ class ViewController(BaseController):
         if not 'url' in request.params:
             abort(400)
         try:
-            server_response = urllib.request.urlopen(request.params['url'])
+            server_response = urllib2.urlopen(request.params['url'])
             headers = server_response.info()
             if headers.get('Content-Type'):
                 response.content_type = headers.get('Content-Type')
             return server_response.read()
-        except urllib.error.HTTPError as e:
+        except urllib2.HTTPError as e:
             response.status_int = e.getcode()
             return

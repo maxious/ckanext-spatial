@@ -20,7 +20,7 @@ from ckanext.spatial.tests.base import SpatialTestBase
 class TestCompareGeometries(SpatialTestBase):
 
     def _get_extent_object(self, geometry):
-        if isinstance(geometry, str):
+        if isinstance(geometry, basestring):
             geometry = json.loads(geometry)
         shape = asShape(geometry)
         return PackageExtent(package_id='xxx',
@@ -133,17 +133,17 @@ class TestBboxQueryOrdered(SpatialQueryTestBase):
 class TestBboxQueryPerformance(SpatialQueryTestBase):
     # x values for the fixtures
     fixtures_x = [(random.uniform(0, 3), random.uniform(3,9)) \
-                   for x in range(10)] # increase the number to 1000 say
+                   for x in xrange(10)] # increase the number to 1000 say
     def test_query(self):
         bbox_dict = self.x_values_to_bbox((2, 7))
         t0 = time.time()
         q = bbox_query(bbox_dict)
         t1 = time.time()
-        print('bbox_query took: ', t1-t0)
+        print 'bbox_query took: ', t1-t0
 
     def test_query_ordered(self):
         bbox_dict = self.x_values_to_bbox((2, 7))
         t0 = time.time()
         q = bbox_query_ordered(bbox_dict)
         t1 = time.time()
-        print('bbox_query_ordered took: ', t1-t0)
+        print 'bbox_query_ordered took: ', t1-t0
